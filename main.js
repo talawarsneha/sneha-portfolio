@@ -1,5 +1,95 @@
+// Mobile menu functionality
+const hamburger = document.querySelector('.hamburger');
+const mobileNav = document.querySelector('.mobile-nav');
+const mobileMenuLinks = document.querySelectorAll('.mobile-menu a');
 const navLinks = document.querySelectorAll('.ul-list li a');
 const sections = document.querySelectorAll('section');
+let overlay;
+
+// Create overlay element
+function createOverlay() {
+    if (overlay) return; // Don't create if it already exists
+    
+    overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    document.body.appendChild(overlay);
+    
+    // Close menu when clicking overlay
+    overlay.addEventListener('click', toggleMenu);
+}
+
+// Toggle mobile menu
+function toggleMenu() {
+    const wasActive = mobileNav.classList.contains('active');
+    
+    // Close any open menus first
+    document.querySelectorAll('.mobile-nav.active').forEach(menu => {
+        menu.classList.remove('active');
+    });
+    document.querySelectorAll('.hamburger.active').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+                overlay = null;
+            }
+        }, 300);
+    }
+    
+    // If menu was not active, open it
+    if (!wasActive) {
+        hamburger.classList.add('active');
+        mobileNav.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        createOverlay();
+        setTimeout(() => {
+            if (overlay) overlay.classList.add('active');
+        }, 10);
+    } else {
+        document.body.style.overflow = '';
+    }
+}
+
+// Close menu when clicking a link
+mobileMenuLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event from bubbling to document
+        toggleMenu();
+    });
+});
+
+// Initialize menu toggle
+if (hamburger) {
+    hamburger.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event from bubbling to document
+        toggleMenu();
+    });
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+    const isClickInsideMenu = mobileNav.contains(e.target) || (hamburger && hamburger.contains(e.target));
+    if (!isClickInsideMenu && mobileNav.classList.contains('active')) {
+        toggleMenu();
+    }
+});
+
+// Handle window resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        if (window.innerWidth > 1024) {
+            // Close menu if open when resizing to desktop
+            if (mobileNav && mobileNav.classList.contains('active')) {
+                toggleMenu();
+            }
+        }
+    }, 250);
+});
 
 function removeActive() {
   navLinks.forEach(link => link.parentElement.classList.remove('active'));
@@ -150,6 +240,65 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       
       // Show designer text after sub-icons
+      
+// Form submission handling
+const form = document.getElementById('contact-form');
+const formStatus = document.getElementById('form-status');
+
+if (form) {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        
+        try {
+            // Disable the submit button and show loading state
+            submitButton.disabled = true;
+            submitButton.textContent = 'Sending...';
+            
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Show success message
+                formStatus.textContent = 'Message sent successfully! I\'ll get back to you soon.';
+                formStatus.style.display = 'block';
+                formStatus.style.backgroundColor = '#4CAF50';
+                formStatus.style.color = 'white';
+                form.reset();
+                
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    formStatus.style.display = 'none';
+                }, 5000);
+            } else {
+                throw new Error('Form submission failed');
+            }
+        } catch (error) {
+            // Show error message
+            formStatus.textContent = 'Oops! There was a problem sending your message. Please try again later.';
+            formStatus.style.display = 'block';
+            formStatus.style.backgroundColor = '#f44336';
+            formStatus.style.color = 'white';
+            
+            // Hide error message after 5 seconds
+            setTimeout(() => {
+                formStatus.style.display = 'none';
+            }, 5000);
+        } finally {
+            // Re-enable the submit button
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+        }
+    });
+}
       setTimeout(() => {
         designerText.classList.remove("hidden");
         designerText.classList.add("fall");
